@@ -1,0 +1,296 @@
+{
+  "entities": {
+    "CmsSettings": {
+      "title": "CMS Settings",
+      "description": "Global dynamic configuration controlled by the Super Admin",
+      "type": "object",
+      "properties": {
+        "brandName": { "type": "string", "maxLength": 80 },
+        "logoUrl": { "type": "string", "maxLength": 450000 },
+        "heroTitle": { "type": "string", "maxLength": 160 },
+        "heroSubtitle": { "type": "string", "maxLength": 300 },
+        "heroImageUrl": { "type": "string", "maxLength": 450000 },
+        "noticeText": { "type": "string", "maxLength": 400 },
+        "paymentNumber": { "type": "string", "maxLength": 30 },
+        "bkashNumber": { "type": "string", "maxLength": 30 },
+        "nagadNumber": { "type": "string", "maxLength": 30 },
+        "bkashEnabled": { "type": "boolean" },
+        "nagadEnabled": { "type": "boolean" },
+        "welcomeBonus": { "type": "number" },
+        "referBonus": { "type": "number" },
+        "depositBonusPercent": { "type": "number" },
+        "minDeposit": { "type": "number" },
+        "minWithdraw": { "type": "number" },
+        "telegramUrl": { "type": "string", "maxLength": 300 },
+        "youtubeUrl": { "type": "string", "maxLength": 300 },
+        "facebookUrl": { "type": "string", "maxLength": 300 },
+        "offerActive": { "type": "boolean" },
+        "offerTitle": { "type": "string", "maxLength": 120 },
+        "offerDescription": { "type": "string", "maxLength": 400 },
+        "offerImageUrl": { "type": "string", "maxLength": 450000 },
+        "offerCtaText": { "type": "string", "maxLength": 60 },
+        "offerLink": { "type": "string", "maxLength": 300 },
+        "accentColor": { "type": "string", "enum": ["amber", "emerald", "blue", "rose"] },
+        "bgTheme": { "type": "string", "enum": ["midnight", "obsidian", "navy"] },
+        "maintenanceMode": { "type": "boolean" },
+        "maintenanceMessage": { "type": "string", "maxLength": 300 },
+        "depositsEnabled": { "type": "boolean" },
+        "withdrawsEnabled": { "type": "boolean" },
+        "registrationEnabled": { "type": "boolean" },
+        "dailyClaimEnabled": { "type": "boolean" },
+        "welcomeBonusEnabled": { "type": "boolean" },
+        "referralEnabled": { "type": "boolean" },
+        "kycRequiredForWithdraw": { "type": "boolean" },
+        "showHeroStats": { "type": "boolean" },
+        "showTutorialsSection": { "type": "boolean" },
+        "showAppInstallCard": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["brandName", "paymentNumber", "welcomeBonus", "referBonus", "depositBonusPercent"]
+    },
+    "Package": {
+      "title": "Investment Package",
+      "description": "Income-generating fintech package",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 300 },
+        "price": { "type": "number" },
+        "dailyIncome": { "type": "number" },
+        "durationDays": { "type": "number" },
+        "imageUrl": { "type": "string", "maxLength": 450000 },
+        "badgeLabel": { "type": "string", "maxLength": 40 },
+        "active": { "type": "boolean" },
+        "sortOrder": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "price", "dailyIncome", "durationDays", "active"]
+    },
+    "UserProfile": {
+      "title": "User Profile & Wallet",
+      "description": "Registered user account, wallet balances, referral info, and device state",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "fullName": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "email": { "type": "string", "maxLength": 120 },
+        "balance": { "type": "number" },
+        "heldBalance": { "type": "number" },
+        "totalDeposited": { "type": "number" },
+        "totalWithdrawn": { "type": "number" },
+        "totalEarned": { "type": "number" },
+        "welcomeBonusClaimed": { "type": "boolean" },
+        "referralCode": { "type": "string", "maxLength": 20 },
+        "referredBy": { "type": "string", "maxLength": 128 },
+        "firstDepositRewarded": { "type": "boolean" },
+        "kycStatus": { "type": "string", "enum": ["unverified", "pending", "verified", "rejected"] },
+        "kycMaskedId": { "type": "string", "maxLength": 60 },
+        "isLocked": { "type": "boolean" },
+        "isDeleted": { "type": "boolean" },
+        "deviceInfo": { "type": "string", "maxLength": 250 },
+        "appInstalled": { "type": "boolean" },
+        "lastClaimPkgId": { "type": "string", "maxLength": 128 },
+        "lastLoginAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "fullName", "balance", "heldBalance", "welcomeBonusClaimed", "referralCode", "kycStatus", "isLocked", "isDeleted"]
+    },
+    "ReferralCode": {
+      "title": "Referral Code Lookup",
+      "description": "Non-PII lookup mapping referral codes to owner UIDs",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string", "maxLength": 20, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["code", "ownerUid", "createdAt"]
+    },
+    "UserPackage": {
+      "title": "Purchased User Package",
+      "description": "Active or completed package owned by a user with 24h daily claim schedule",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "packageId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "packageName": { "type": "string", "maxLength": 100 },
+        "price": { "type": "number" },
+        "dailyIncome": { "type": "number" },
+        "durationDays": { "type": "number" },
+        "daysClaimed": { "type": "number" },
+        "purchasedAt": { "type": "string", "format": "date-time" },
+        "lastClaimedAt": { "type": "string", "format": "date-time" },
+        "nextClaimAt": { "type": "string", "format": "date-time" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["active", "completed"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "packageId", "packageName", "price", "dailyIncome", "durationDays", "daysClaimed", "status"]
+    },
+    "Transaction": {
+      "title": "Financial Transaction",
+      "description": "Deposit, withdraw, bonus, package purchase, and daily claim ledger",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userName": { "type": "string", "maxLength": 100 },
+        "userPhone": { "type": "string", "maxLength": 30 },
+        "type": { "type": "string", "enum": ["deposit", "withdraw", "welcome_bonus", "refer_bonus", "package_buy", "daily_claim", "admin_adjust", "admin_bonus"] },
+        "amount": { "type": "number" },
+        "bonusAmount": { "type": "number" },
+        "method": { "type": "string", "enum": ["bkash", "nagad", "wallet", "system"] },
+        "senderNumber": { "type": "string", "maxLength": 30 },
+        "receiverNumber": { "type": "string", "maxLength": 30 },
+        "trxId": { "type": "string", "maxLength": 60 },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected", "completed"] },
+        "adminNote": { "type": "string", "maxLength": 300 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "type", "amount", "method", "status"]
+    },
+    "KycSubmission": {
+      "title": "KYC Verification Record",
+      "description": "Encrypted user identity verification payload",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "fullName": { "type": "string", "maxLength": 100 },
+        "documentType": { "type": "string", "enum": ["nid", "passport", "driving_license"] },
+        "maskedNumber": { "type": "string", "maxLength": 40 },
+        "encryptedDetails": { "type": "string", "maxLength": 4000 },
+        "documentImage": { "type": "string", "maxLength": 450000 },
+        "status": { "type": "string", "enum": ["pending", "verified", "rejected"] },
+        "rejectionReason": { "type": "string", "maxLength": 300 },
+        "submittedAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "fullName", "documentType", "maskedNumber", "encryptedDetails", "status"]
+    },
+    "SupportChat": {
+      "title": "Support Thread",
+      "description": "Live customer support thread metadata",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userName": { "type": "string", "maxLength": 100 },
+        "userContact": { "type": "string", "maxLength": 100 },
+        "lastMessage": { "type": "string", "maxLength": 500 },
+        "unreadByAdmin": { "type": "number" },
+        "unreadByUser": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "userName", "lastMessage", "updatedAt"]
+    },
+    "SupportMessage": {
+      "title": "Support Message",
+      "description": "Real-time chat message between user and support admin",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "senderId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "senderRole": { "type": "string", "enum": ["user", "admin"] },
+        "text": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "senderId", "senderRole", "text", "createdAt"]
+    },
+    "ActivityLog": {
+      "title": "Activity Log",
+      "description": "Immutable real-time audit trail",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userLabel": { "type": "string", "maxLength": 120 },
+        "action": { "type": "string", "maxLength": 80 },
+        "details": { "type": "string", "maxLength": 400 },
+        "deviceInfo": { "type": "string", "maxLength": 250 },
+        "severity": { "type": "string", "enum": ["info", "warning", "security"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "action", "details", "severity", "createdAt"]
+    },
+    "AppDownload": {
+      "title": "App Download Event",
+      "description": "PWA or mobile installation tracking record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "maxLength": 128 },
+        "platform": { "type": "string", "maxLength": 80 },
+        "userAgent": { "type": "string", "maxLength": 300 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "platform", "createdAt"]
+    },
+    "AdminRecord": {
+      "title": "Super Admin Lock",
+      "description": "Single super admin authorization record",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "maxLength": 120 },
+        "role": { "type": "string", "enum": ["super_admin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/cms/{docId}": {
+      "schema": { "$ref": "#/entities/CmsSettings" },
+      "description": "Dynamic CMS settings document"
+    },
+    "/packages/{packageId}": {
+      "schema": { "$ref": "#/entities/Package" },
+      "description": "Available investment/income packages"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile, wallet balance, KYC summary, and device state"
+    },
+    "/referralCodes/{code}": {
+      "schema": { "$ref": "#/entities/ReferralCode" },
+      "description": "Public referral code to UID mapping"
+    },
+    "/userPackages/{userPackageId}": {
+      "schema": { "$ref": "#/entities/UserPackage" },
+      "description": "User purchased packages and 24-hour daily claim state"
+    },
+    "/transactions/{txId}": {
+      "schema": { "$ref": "#/entities/Transaction" },
+      "description": "Deposits, withdrawals, bonuses, and package/claim transactions"
+    },
+    "/kycSubmissions/{userId}": {
+      "schema": { "$ref": "#/entities/KycSubmission" },
+      "description": "Encrypted KYC documents and verification status"
+    },
+    "/supportChats/{userId}": {
+      "schema": { "$ref": "#/entities/SupportChat" },
+      "description": "Customer support chat thread"
+    },
+    "/supportChats/{userId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/SupportMessage" },
+      "description": "Messages inside a user support chat thread"
+    },
+    "/activityLogs/{logId}": {
+      "schema": { "$ref": "#/entities/ActivityLog" },
+      "description": "Immutable real-time activity logs"
+    },
+    "/appDownloads/{downloadId}": {
+      "schema": { "$ref": "#/entities/AppDownload" },
+      "description": "Tracked PWA/app download events"
+    },
+    "/admins/{uid}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Single super admin authorization registry"
+    }
+  }
+}

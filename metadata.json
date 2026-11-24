@@ -1,0 +1,6 @@
+{
+  "name": "VaultPro Fintech",
+  "description": "আধুনিক প্রিমিয়াম ফিনটেক প্যাকেজ ও দৈনিক ইনকাম ম্যানেজমেন্ট প্ল্যাটফর্ম — বিকাশ, নগদ, স্মার্ট রেফার, কেওয়াইসি এবং রিয়েল-টাইম ক্লাউড ওয়ালেট।",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

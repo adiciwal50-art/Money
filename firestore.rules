@@ -1,0 +1,640 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Global Hardened Primitives ---
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Verified email check prevents spoofing attacks; no DB read so safe in allow list
+    function isSuperAdminEmail() {
+      return isSignedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == 'adiciwal50@gmail.com';
+    }
+
+    function isAdmin() {
+      return isSuperAdminEmail()
+        || (isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    // --- Validation Blueprints ---
+    function isValidCmsSettings(data) {
+      return data.keys().hasAll([
+        'brandName', 'logoUrl', 'heroTitle', 'heroSubtitle', 'heroImageUrl',
+        'noticeText', 'paymentNumber', 'bkashNumber', 'nagadNumber',
+        'bkashEnabled', 'nagadEnabled', 'welcomeBonus', 'referBonus',
+        'depositBonusPercent', 'minDeposit', 'minWithdraw', 'telegramUrl',
+        'youtubeUrl', 'facebookUrl', 'offerActive', 'offerTitle',
+        'offerDescription', 'offerImageUrl', 'offerCtaText', 'offerLink',
+        'accentColor', 'bgTheme', 'maintenanceMode', 'maintenanceMessage',
+        'depositsEnabled', 'withdrawsEnabled', 'registrationEnabled',
+        'dailyClaimEnabled', 'welcomeBonusEnabled', 'referralEnabled',
+        'kycRequiredForWithdraw', 'showHeroStats', 'showTutorialsSection',
+        'showAppInstallCard', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'brandName', 'logoUrl', 'heroTitle', 'heroSubtitle', 'heroImageUrl',
+        'noticeText', 'paymentNumber', 'bkashNumber', 'nagadNumber',
+        'bkashEnabled', 'nagadEnabled', 'welcomeBonus', 'referBonus',
+        'depositBonusPercent', 'minDeposit', 'minWithdraw', 'telegramUrl',
+        'youtubeUrl', 'facebookUrl', 'offerActive', 'offerTitle',
+        'offerDescription', 'offerImageUrl', 'offerCtaText', 'offerLink',
+        'accentColor', 'bgTheme', 'maintenanceMode', 'maintenanceMessage',
+        'depositsEnabled', 'withdrawsEnabled', 'registrationEnabled',
+        'dailyClaimEnabled', 'welcomeBonusEnabled', 'referralEnabled',
+        'kycRequiredForWithdraw', 'showHeroStats', 'showTutorialsSection',
+        'showAppInstallCard', 'updatedAt'
+      ])
+      && data.brandName is string && data.brandName.size() > 0 && data.brandName.size() <= 80
+      && data.logoUrl is string && data.logoUrl.size() <= 450000
+      && data.heroTitle is string && data.heroTitle.size() <= 160
+      && data.heroSubtitle is string && data.heroSubtitle.size() <= 300
+      && data.heroImageUrl is string && data.heroImageUrl.size() <= 450000
+      && data.noticeText is string && data.noticeText.size() <= 400
+      && data.paymentNumber is string && data.paymentNumber.size() > 0 && data.paymentNumber.size() <= 30
+      && data.bkashNumber is string && data.bkashNumber.size() <= 30
+      && data.nagadNumber is string && data.nagadNumber.size() <= 30
+      && data.bkashEnabled is bool
+      && data.nagadEnabled is bool
+      && data.welcomeBonus is number && data.welcomeBonus >= 0 && data.welcomeBonus <= 10000
+      && data.referBonus is number && data.referBonus >= 0 && data.referBonus <= 10000
+      && data.depositBonusPercent is number && data.depositBonusPercent >= 0 && data.depositBonusPercent <= 100
+      && data.minDeposit is number && data.minDeposit >= 10
+      && data.minWithdraw is number && data.minWithdraw >= 10
+      && data.telegramUrl is string && data.telegramUrl.size() <= 300
+      && data.youtubeUrl is string && data.youtubeUrl.size() <= 300
+      && data.facebookUrl is string && data.facebookUrl.size() <= 300
+      && data.offerActive is bool
+      && data.offerTitle is string && data.offerTitle.size() <= 120
+      && data.offerDescription is string && data.offerDescription.size() <= 400
+      && data.offerImageUrl is string && data.offerImageUrl.size() <= 450000
+      && data.offerCtaText is string && data.offerCtaText.size() <= 60
+      && data.offerLink is string && data.offerLink.size() <= 300
+      && data.accentColor in ['amber', 'emerald', 'blue', 'rose']
+      && data.bgTheme in ['midnight', 'obsidian', 'navy']
+      && data.maintenanceMode is bool
+      && data.maintenanceMessage is string && data.maintenanceMessage.size() <= 300
+      && data.depositsEnabled is bool
+      && data.withdrawsEnabled is bool
+      && data.registrationEnabled is bool
+      && data.dailyClaimEnabled is bool
+      && data.welcomeBonusEnabled is bool
+      && data.referralEnabled is bool
+      && data.kycRequiredForWithdraw is bool
+      && data.showHeroStats is bool
+      && data.showTutorialsSection is bool
+      && data.showAppInstallCard is bool
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidPackage(data) {
+      return data.keys().hasAll([
+        'id', 'name', 'description', 'price', 'dailyIncome', 'durationDays',
+        'imageUrl', 'badgeLabel', 'active', 'sortOrder', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'id', 'name', 'description', 'price', 'dailyIncome', 'durationDays',
+        'imageUrl', 'badgeLabel', 'active', 'sortOrder', 'createdAt', 'updatedAt'
+      ])
+      && isValidId(data.id)
+      && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+      && data.description is string && data.description.size() <= 300
+      && data.price is number && data.price > 0 && data.price <= 1000000
+      && data.dailyIncome is number && data.dailyIncome > 0 && data.dailyIncome <= 100000
+      && data.durationDays is number && data.durationDays >= 1 && data.durationDays <= 3650
+      && data.imageUrl is string && data.imageUrl.size() <= 450000
+      && data.badgeLabel is string && data.badgeLabel.size() <= 40
+      && data.active is bool
+      && data.sortOrder is number
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidUser(data, userId) {
+      return data.keys().hasAll([
+        'uid', 'fullName', 'phone', 'email', 'balance', 'heldBalance',
+        'totalDeposited', 'totalWithdrawn', 'totalEarned', 'welcomeBonusClaimed',
+        'referralCode', 'referredBy', 'firstDepositRewarded', 'kycStatus',
+        'kycMaskedId', 'isLocked', 'isDeleted', 'deviceInfo', 'appInstalled',
+        'lastClaimPkgId', 'lastLoginAt', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'uid', 'fullName', 'phone', 'email', 'balance', 'heldBalance',
+        'totalDeposited', 'totalWithdrawn', 'totalEarned', 'welcomeBonusClaimed',
+        'referralCode', 'referredBy', 'firstDepositRewarded', 'kycStatus',
+        'kycMaskedId', 'isLocked', 'isDeleted', 'deviceInfo', 'appInstalled',
+        'lastClaimPkgId', 'lastLoginAt', 'createdAt', 'updatedAt'
+      ])
+      && data.uid == userId
+      && isValidId(data.uid)
+      && data.fullName is string && data.fullName.size() > 0 && data.fullName.size() <= 100
+      && data.phone is string && data.phone.size() <= 30
+      && data.email is string && data.email.size() <= 120
+      && data.balance is number && data.balance >= 0
+      && data.heldBalance is number && data.heldBalance >= 0
+      && data.totalDeposited is number && data.totalDeposited >= 0
+      && data.totalWithdrawn is number && data.totalWithdrawn >= 0
+      && data.totalEarned is number && data.totalEarned >= 0
+      && data.welcomeBonusClaimed is bool
+      && data.referralCode is string && data.referralCode.size() >= 4 && data.referralCode.size() <= 20
+      && data.referredBy is string && data.referredBy.size() <= 128
+      && data.firstDepositRewarded is bool
+      && data.kycStatus in ['unverified', 'pending', 'verified', 'rejected']
+      && data.kycMaskedId is string && data.kycMaskedId.size() <= 60
+      && data.isLocked is bool
+      && data.isDeleted is bool
+      && data.deviceInfo is string && data.deviceInfo.size() <= 250
+      && data.appInstalled is bool
+      && data.lastClaimPkgId is string && data.lastClaimPkgId.size() <= 128
+      && data.lastLoginAt is timestamp
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidReferralCode(data, code) {
+      return data.keys().hasAll(['code', 'ownerUid', 'createdAt'])
+      && data.keys().hasOnly(['code', 'ownerUid', 'createdAt'])
+      && data.code == code
+      && isValidId(data.code)
+      && data.code.size() <= 20
+      && isValidId(data.ownerUid)
+      && data.createdAt is timestamp;
+    }
+
+    function isValidUserPackage(data, upId) {
+      return data.keys().hasAll([
+        'id', 'userId', 'packageId', 'packageName', 'price', 'dailyIncome',
+        'durationDays', 'daysClaimed', 'purchasedAt', 'lastClaimedAt',
+        'nextClaimAt', 'expiresAt', 'status', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'id', 'userId', 'packageId', 'packageName', 'price', 'dailyIncome',
+        'durationDays', 'daysClaimed', 'purchasedAt', 'lastClaimedAt',
+        'nextClaimAt', 'expiresAt', 'status', 'updatedAt'
+      ])
+      && data.id == upId
+      && isValidId(data.id)
+      && isValidId(data.userId)
+      && isValidId(data.packageId)
+      && data.packageName is string && data.packageName.size() > 0 && data.packageName.size() <= 100
+      && data.price is number && data.price > 0
+      && data.dailyIncome is number && data.dailyIncome > 0
+      && data.durationDays is number && data.durationDays >= 1
+      && data.daysClaimed is number && data.daysClaimed >= 0 && data.daysClaimed <= data.durationDays
+      && data.purchasedAt is timestamp
+      && data.lastClaimedAt is timestamp
+      && data.nextClaimAt is timestamp
+      && data.expiresAt is timestamp
+      && data.status in ['active', 'completed']
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidTransaction(data, txId) {
+      return data.keys().hasAll([
+        'id', 'userId', 'userName', 'userPhone', 'type', 'amount', 'bonusAmount',
+        'method', 'senderNumber', 'receiverNumber', 'trxId', 'status',
+        'adminNote', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'id', 'userId', 'userName', 'userPhone', 'type', 'amount', 'bonusAmount',
+        'method', 'senderNumber', 'receiverNumber', 'trxId', 'status',
+        'adminNote', 'createdAt', 'updatedAt'
+      ])
+      && data.id == txId
+      && isValidId(data.id)
+      && isValidId(data.userId)
+      && data.userName is string && data.userName.size() <= 100
+      && data.userPhone is string && data.userPhone.size() <= 30
+      && data.type in ['deposit', 'withdraw', 'welcome_bonus', 'refer_bonus', 'package_buy', 'daily_claim', 'admin_adjust', 'admin_bonus']
+      && data.amount is number && data.amount >= 0 && data.amount <= 10000000
+      && data.bonusAmount is number && data.bonusAmount >= 0 && data.bonusAmount <= 1000000
+      && data.method in ['bkash', 'nagad', 'wallet', 'system']
+      && data.senderNumber is string && data.senderNumber.size() <= 30
+      && data.receiverNumber is string && data.receiverNumber.size() <= 30
+      && data.trxId is string && data.trxId.size() <= 60
+      && data.status in ['pending', 'approved', 'rejected', 'completed']
+      && data.adminNote is string && data.adminNote.size() <= 300
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidKyc(data, userId) {
+      return data.keys().hasAll([
+        'userId', 'fullName', 'documentType', 'maskedNumber',
+        'encryptedDetails', 'documentImage', 'status', 'rejectionReason',
+        'submittedAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'userId', 'fullName', 'documentType', 'maskedNumber',
+        'encryptedDetails', 'documentImage', 'status', 'rejectionReason',
+        'submittedAt', 'updatedAt'
+      ])
+      && data.userId == userId
+      && isValidId(data.userId)
+      && data.fullName is string && data.fullName.size() > 0 && data.fullName.size() <= 100
+      && data.documentType in ['nid', 'passport', 'driving_license']
+      && data.maskedNumber is string && data.maskedNumber.size() > 0 && data.maskedNumber.size() <= 40
+      && data.encryptedDetails is string && data.encryptedDetails.size() > 0 && data.encryptedDetails.size() <= 4000
+      && data.documentImage is string && data.documentImage.size() <= 450000
+      && data.status in ['pending', 'verified', 'rejected']
+      && data.rejectionReason is string && data.rejectionReason.size() <= 300
+      && data.submittedAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidSupportChat(data, userId) {
+      return data.keys().hasAll([
+        'userId', 'userName', 'userContact', 'lastMessage',
+        'unreadByAdmin', 'unreadByUser', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'userId', 'userName', 'userContact', 'lastMessage',
+        'unreadByAdmin', 'unreadByUser', 'updatedAt'
+      ])
+      && data.userId == userId
+      && isValidId(data.userId)
+      && data.userName is string && data.userName.size() > 0 && data.userName.size() <= 100
+      && data.userContact is string && data.userContact.size() <= 100
+      && data.lastMessage is string && data.lastMessage.size() <= 500
+      && data.unreadByAdmin is number && data.unreadByAdmin >= 0
+      && data.unreadByUser is number && data.unreadByUser >= 0
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidSupportMessage(data, msgId) {
+      return data.keys().hasAll(['id', 'senderId', 'senderRole', 'text', 'createdAt'])
+      && data.keys().hasOnly(['id', 'senderId', 'senderRole', 'text', 'createdAt'])
+      && data.id == msgId
+      && isValidId(data.id)
+      && isValidId(data.senderId)
+      && data.senderRole in ['user', 'admin']
+      && data.text is string && data.text.size() > 0 && data.text.size() <= 1000
+      && data.createdAt is timestamp;
+    }
+
+    function isValidActivityLog(data, logId) {
+      return data.keys().hasAll(['id', 'userId', 'userLabel', 'action', 'details', 'deviceInfo', 'severity', 'createdAt'])
+      && data.keys().hasOnly(['id', 'userId', 'userLabel', 'action', 'details', 'deviceInfo', 'severity', 'createdAt'])
+      && data.id == logId
+      && isValidId(data.id)
+      && data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128
+      && data.userLabel is string && data.userLabel.size() <= 120
+      && data.action is string && data.action.size() > 0 && data.action.size() <= 80
+      && data.details is string && data.details.size() <= 400
+      && data.deviceInfo is string && data.deviceInfo.size() <= 250
+      && data.severity in ['info', 'warning', 'security']
+      && data.createdAt is timestamp;
+    }
+
+    function isValidAppDownload(data, downloadId) {
+      return data.keys().hasAll(['id', 'userId', 'platform', 'userAgent', 'createdAt'])
+      && data.keys().hasOnly(['id', 'userId', 'platform', 'userAgent', 'createdAt'])
+      && data.id == downloadId
+      && isValidId(data.id)
+      && data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128
+      && data.platform is string && data.platform.size() > 0 && data.platform.size() <= 80
+      && data.userAgent is string && data.userAgent.size() <= 300
+      && data.createdAt is timestamp;
+    }
+
+    function isValidAdminRecord(data, uid) {
+      return data.keys().hasAll(['uid', 'email', 'role', 'createdAt'])
+      && data.keys().hasOnly(['uid', 'email', 'role', 'createdAt'])
+      && data.uid == uid
+      && isValidId(data.uid)
+      && data.email is string && data.email.size() > 0 && data.email.size() <= 120
+      && data.role == 'super_admin'
+      && data.createdAt is timestamp;
+    }
+
+    // --- Collection Rules ---
+
+    // 1. CMS Settings
+    match /cms/{docId} {
+      allow get: if isValidId(docId);
+      allow list: if true;
+      allow create, update: if isValidId(docId)
+        && isAdmin()
+        && isValidCmsSettings(incoming())
+        && incoming().updatedAt == request.time;
+      allow delete: if false;
+    }
+
+    // 2. Packages
+    match /packages/{packageId} {
+      allow get: if isValidId(packageId);
+      allow list: if true;
+      allow create: if isValidId(packageId)
+        && isAdmin()
+        && isValidPackage(incoming())
+        && incoming().id == packageId
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(packageId)
+        && isAdmin()
+        && isValidPackage(incoming())
+        && incoming().id == existing().id
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time;
+      allow delete: if isValidId(packageId) && isAdmin();
+    }
+
+    // 3. Users (PII Protected)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isSuperAdminEmail() || (isSignedIn() && resource.data.uid == request.auth.uid);
+
+      allow create: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUser(incoming(), userId)
+        && incoming().balance == 0
+        && incoming().heldBalance == 0
+        && incoming().totalDeposited == 0
+        && incoming().totalWithdrawn == 0
+        && incoming().totalEarned == 0
+        && incoming().welcomeBonusClaimed == false
+        && incoming().firstDepositRewarded == false
+        && incoming().kycStatus == 'unverified'
+        && incoming().isLocked == false
+        && incoming().isDeleted == false
+        && incoming().lastClaimPkgId == ''
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isValidId(userId) && isSignedIn() && isValidUser(incoming(), userId) && (
+        isAdmin() ||
+        (
+          isOwner(userId)
+          && !existing().isLocked
+          && !existing().isDeleted
+          && incoming().uid == existing().uid
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().referralCode == existing().referralCode
+          && incoming().referredBy == existing().referredBy
+          && incoming().firstDepositRewarded == existing().firstDepositRewarded
+          && incoming().totalDeposited == existing().totalDeposited
+          && incoming().totalWithdrawn == existing().totalWithdrawn
+          && incoming().isLocked == existing().isLocked
+          && incoming().isDeleted == existing().isDeleted
+          && (
+            // Action A: Claim Welcome Bonus once (amount verified against cms/settings)
+            (
+              !existing().welcomeBonusClaimed
+              && incoming().welcomeBonusClaimed == true
+              && incoming().diff(existing()).affectedKeys().hasOnly(['welcomeBonusClaimed', 'balance', 'totalEarned', 'updatedAt'])
+              && incoming().balance == existing().balance + get(/databases/$(database)/documents/cms/settings).data.welcomeBonus
+              && incoming().totalEarned == existing().totalEarned + get(/databases/$(database)/documents/cms/settings).data.welcomeBonus
+            )
+            ||
+            // Action B: Purchase Package (deduct balance only, atomic check via balance decrease)
+            (
+              incoming().diff(existing()).affectedKeys().hasOnly(['balance', 'updatedAt'])
+              && incoming().balance < existing().balance
+              && incoming().balance >= 0
+            )
+            ||
+            // Action C: Daily Package Claim (verified atomically against userPackages/{lastClaimPkgId})
+            (
+              incoming().diff(existing()).affectedKeys().hasOnly(['balance', 'totalEarned', 'lastClaimPkgId', 'updatedAt'])
+              && isValidId(incoming().lastClaimPkgId)
+              && get(/databases/$(database)/documents/userPackages/$(incoming().lastClaimPkgId)).data.userId == request.auth.uid
+              && get(/databases/$(database)/documents/userPackages/$(incoming().lastClaimPkgId)).data.status == 'active'
+              && get(/databases/$(database)/documents/userPackages/$(incoming().lastClaimPkgId)).data.nextClaimAt <= request.time
+              && get(/databases/$(database)/documents/userPackages/$(incoming().lastClaimPkgId)).data.daysClaimed < get(/databases/$(database)/documents/userPackages/$(incoming().lastClaimPkgId)).data.durationDays
+              && getAfter(/databases/$(database)/documents/userPackages/$(incoming().lastClaimPkgId)).data.lastClaimedAt == request.time
+              && incoming().balance == existing().balance + get(/databases/$(database)/documents/userPackages/$(incoming().lastClaimPkgId)).data.dailyIncome
+              && incoming().totalEarned == existing().totalEarned + get(/databases/$(database)/documents/userPackages/$(incoming().lastClaimPkgId)).data.dailyIncome
+            )
+            ||
+            // Action D: Withdraw Hold (move balance to heldBalance)
+            (
+              incoming().diff(existing()).affectedKeys().hasOnly(['balance', 'heldBalance', 'updatedAt'])
+              && incoming().balance < existing().balance
+              && incoming().balance >= 0
+              && incoming().heldBalance == existing().heldBalance + (existing().balance - incoming().balance)
+            )
+            ||
+            // Action E: Submit KYC (pending only)
+            (
+              incoming().diff(existing()).affectedKeys().hasOnly(['kycStatus', 'kycMaskedId', 'fullName', 'updatedAt'])
+              && incoming().kycStatus == 'pending'
+            )
+            ||
+            // Action F: Update device / login session info
+            (
+              incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'deviceInfo', 'appInstalled', 'lastLoginAt', 'updatedAt'])
+            )
+          )
+        )
+      );
+
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // 4. Referral Codes (Non-PII Lookup)
+    match /referralCodes/{code} {
+      allow get: if isValidId(code);
+      allow list: if isSuperAdminEmail();
+      allow create: if isValidId(code)
+        && isSignedIn()
+        && isValidReferralCode(incoming(), code)
+        && incoming().ownerUid == request.auth.uid
+        && incoming().createdAt == request.time;
+      allow update, delete: if isValidId(code) && isAdmin();
+    }
+
+    // 5. User Packages
+    match /userPackages/{upId} {
+      allow get: if isValidId(upId) && (isAdmin() || (isSignedIn() && existing().userId == request.auth.uid));
+      allow list: if isSuperAdminEmail() || (isSignedIn() && resource.data.userId == request.auth.uid);
+
+      allow create: if isValidId(upId)
+        && isSignedIn()
+        && isValidUserPackage(incoming(), upId)
+        && incoming().userId == request.auth.uid
+        && exists(/databases/$(database)/documents/packages/$(incoming().packageId))
+        && get(/databases/$(database)/documents/packages/$(incoming().packageId)).data.active == true
+        && incoming().price == get(/databases/$(database)/documents/packages/$(incoming().packageId)).data.price
+        && incoming().dailyIncome == get(/databases/$(database)/documents/packages/$(incoming().packageId)).data.dailyIncome
+        && incoming().durationDays == get(/databases/$(database)/documents/packages/$(incoming().packageId)).data.durationDays
+        && incoming().daysClaimed == 0
+        && incoming().status == 'active'
+        && incoming().purchasedAt == request.time
+        && incoming().lastClaimedAt == request.time
+        && incoming().nextClaimAt >= request.time + duration.value(23, 'h')
+        && incoming().nextClaimAt <= request.time + duration.value(25, 'h')
+        && incoming().updatedAt == request.time
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.balance == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.balance - incoming().price;
+
+      allow update: if isValidId(upId) && isSignedIn() && isValidUserPackage(incoming(), upId) && (
+        isAdmin() ||
+        (
+          existing().userId == request.auth.uid
+          && existing().status == 'active'
+          && existing().nextClaimAt <= request.time
+          && existing().daysClaimed < existing().durationDays
+          && incoming().diff(existing()).affectedKeys().hasOnly(['daysClaimed', 'lastClaimedAt', 'nextClaimAt', 'status', 'updatedAt'])
+          && incoming().daysClaimed == existing().daysClaimed + 1
+          && incoming().lastClaimedAt == request.time
+          && incoming().nextClaimAt >= request.time + duration.value(23, 'h')
+          && incoming().nextClaimAt <= request.time + duration.value(25, 'h')
+          && incoming().updatedAt == request.time
+          && incoming().userId == existing().userId
+          && incoming().packageId == existing().packageId
+          && incoming().price == existing().price
+          && incoming().dailyIncome == existing().dailyIncome
+          && incoming().durationDays == existing().durationDays
+          && incoming().purchasedAt == existing().purchasedAt
+        )
+      );
+
+      allow delete: if isValidId(upId) && isAdmin();
+    }
+
+    // 6. Transactions
+    match /transactions/{txId} {
+      allow get: if isValidId(txId) && (isAdmin() || (isSignedIn() && existing().userId == request.auth.uid));
+      allow list: if isSuperAdminEmail() || (isSignedIn() && resource.data.userId == request.auth.uid);
+
+      allow create: if isValidId(txId)
+        && isSignedIn()
+        && isValidTransaction(incoming(), txId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (
+            incoming().userId == request.auth.uid
+            && (
+              (incoming().type == 'deposit' && incoming().status == 'pending' && incoming().amount >= get(/databases/$(database)/documents/cms/settings).data.minDeposit)
+              || (incoming().type == 'withdraw' && incoming().status == 'pending' && incoming().amount >= get(/databases/$(database)/documents/cms/settings).data.minWithdraw && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.heldBalance == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.heldBalance + incoming().amount)
+              || (incoming().type in ['welcome_bonus', 'package_buy', 'daily_claim'] && incoming().status == 'completed')
+            )
+          )
+        );
+
+      // Terminal State Locking: Only Admin can approve/reject or modify transactions
+      allow update, delete: if isValidId(txId) && isAdmin();
+    }
+
+    // 7. KYC Submissions (Isolated PII + AES-GCM Encrypted Details)
+    match /kycSubmissions/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isSuperAdminEmail() || (isSignedIn() && resource.data.userId == request.auth.uid);
+
+      allow create, update: if isValidId(userId)
+        && isSignedIn()
+        && isValidKyc(incoming(), userId)
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (isOwner(userId) && incoming().status == 'pending' && incoming().rejectionReason == '')
+        );
+
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // 8. Customer Support Live Chat (Master Gate)
+    match /supportChats/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isSuperAdminEmail() || (isSignedIn() && resource.data.userId == request.auth.uid);
+
+      allow create, update: if isValidId(userId)
+        && isSignedIn()
+        && isValidSupportChat(incoming(), userId)
+        && incoming().updatedAt == request.time
+        && (isOwner(userId) || isAdmin());
+
+      allow delete: if isValidId(userId) && isAdmin();
+
+      match /messages/{msgId} {
+        allow get: if isValidId(userId) && isValidId(msgId) && (isOwner(userId) || isAdmin());
+        allow list: if isSuperAdminEmail() || (isSignedIn() && userId == request.auth.uid);
+
+        allow create: if isValidId(userId)
+          && isValidId(msgId)
+          && isSignedIn()
+          && exists(/databases/$(database)/documents/supportChats/$(userId))
+          && isValidSupportMessage(incoming(), msgId)
+          && incoming().createdAt == request.time
+          && (
+            (isOwner(userId) && incoming().senderId == request.auth.uid && incoming().senderRole == 'user') ||
+            (isAdmin() && incoming().senderRole == 'admin')
+          );
+
+        allow update, delete: if false;
+      }
+    }
+
+    // 9. Immutable Real-Time Activity Logs
+    match /activityLogs/{logId} {
+      allow get: if isValidId(logId) && (isAdmin() || (isSignedIn() && existing().userId == request.auth.uid));
+      allow list: if isSuperAdminEmail() || (isSignedIn() && resource.data.userId == request.auth.uid);
+
+      allow create: if isValidId(logId)
+        && isValidActivityLog(incoming(), logId)
+        && incoming().createdAt == request.time
+        && (
+          isAdmin() ||
+          (isSignedIn() && incoming().userId == request.auth.uid) ||
+          (!isSignedIn() && incoming().userId == 'anonymous' && incoming().action in ['app_download', 'failed_login', 'suspicious_admin_probe'])
+        );
+
+      allow update, delete: if false;
+    }
+
+    // 10. App Downloads Tracker
+    match /appDownloads/{downloadId} {
+      allow get: if isValidId(downloadId) && isAdmin();
+      allow list: if isSuperAdminEmail();
+
+      allow create: if isValidId(downloadId)
+        && isValidAppDownload(incoming(), downloadId)
+        && incoming().createdAt == request.time
+        && (
+          (isSignedIn() && incoming().userId == request.auth.uid) ||
+          (!isSignedIn() && incoming().userId == 'anonymous')
+        );
+
+      allow update, delete: if false;
+    }
+
+    // 11. Single Super Admin Lock
+    match /admins/{uid} {
+      allow get: if isValidId(uid) && isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow list: if isSuperAdminEmail();
+
+      allow create: if isValidId(uid)
+        && isOwner(uid)
+        && isSuperAdminEmail()
+        && isValidAdminRecord(incoming(), uid)
+        && incoming().createdAt == request.time;
+
+      allow update, delete: if false;
+    }
+  }
+}
